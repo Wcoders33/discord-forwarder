@@ -5,35 +5,35 @@ export default async function handler(req, res) {
 
   let body = req.body;
 
-  // If body is undefined, try to parse it manually
-  if (!body || typeof body !== "object") {
+  // If body is a string, parse it
+  if (typeof body === "string") {
     try {
-      body = JSON.parse(req.body);
+      body = JSON.parse(body);
     } catch {
-      return res.status(400).json({ success: false, error: "Invalid JSON body" });
+      return res.status(400).json({ success: false, error: "Invalid JSON" });
     }
   }
 
-  const { embed, webhook_url } = body;
+  const { webhook_url, embed } = body;
 
-  if (!embed || !webhook_url) {
-    return res.status(400).json({ success: false, error: "Missing embed or webhook_url" });
+  if (!webhook_url || !embed) {
+    return res.status(400).json({ success: false, error: "Missing webhook_url or embed" });
   }
 
   try {
-    const response = await fetch(webhook_url, {
+    const discordRes = await fetch(webhook_url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed] }),
+      body: JSON.stringify({ embeds: [embed] })
     });
 
-    if (response.status >= 200 && response.status < 300) {
+    if (discordRes.status >= 200 && discordRes.status < 300) {
       return res.status(200).json({ success: true });
     } else {
-      const text = await response.text();
-      return res.status(response.status).json({ success: false, status: response.status, response: text });
+      const text = await discordRes.text();
+      return res.status(discordRes.status).json({ success: false, response: text });
     }
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 }
