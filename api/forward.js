@@ -1,5 +1,20 @@
 export default async function handler(req, res) {
-  const { embed, webhook_url } = req.body;
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, error: "Method not allowed" });
+  }
+
+  let body = req.body;
+
+  // If body is undefined, try to parse it manually
+  if (!body || typeof body !== "object") {
+    try {
+      body = JSON.parse(req.body);
+    } catch {
+      return res.status(400).json({ success: false, error: "Invalid JSON body" });
+    }
+  }
+
+  const { embed, webhook_url } = body;
 
   if (!embed || !webhook_url) {
     return res.status(400).json({ success: false, error: "Missing embed or webhook_url" });
